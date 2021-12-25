@@ -14,6 +14,8 @@ class LoginForm extends Component {
         this.state={
             username: "",
             code_button_loading: false,
+            // S-3 增加按钮 disable 状态
+            code_button_disable : false,
             code_button_text: "获取验证码",
         };
     }
@@ -34,7 +36,6 @@ class LoginForm extends Component {
           code_button_loading: true,
           code_button_text: "发送中",
       })
-      return false;
       const requestData = {
           username: "this.state.username",
           module: "login",
@@ -42,6 +43,7 @@ class LoginForm extends Component {
       GetCode(requestData).then(response => {
         //   s-1: 如果成功,执行倒计时，每1秒钟，改变button 的文字；
         //   console.log(response);
+          this.countDown();
       }).catch(error => {
           this.setState({
             code_button_loading:false,
@@ -57,13 +59,51 @@ class LoginForm extends Component {
         })
     }
 
+    // s-2 倒计时
+    // countDown = () => {
+    //     // s-5
+    //     let sec = 60;
+    //     this.setState({            
+    //         code_button_loading:false,
+    //         code_button_disable:true,
+    //         code_button_text: `${sec} S`,  // 注意是 ``, 不是 '';          
+    //       })
+    // } 
+    countDown = () => {
+        // s-6 申明一个定时器
+        let timer = null;
+        // 倒计时时间
+        let sec = 5;
+        // 修改状态
+        this.setState({            
+            code_button_loading:false,
+            code_button_disable:true,
+            code_button_text: `${sec} S`,  // 注意是 ``, 不是 '';          
+          })
+        //   S-7 开一个定时器
+        timer = setInterval(() => {
+            sec --;
+            if (sec <= 0){
+                this.setState({
+                    code_button_text: "重新获取",
+                    code_button_disable: false,
+                })
+                clearInterval(timer);
+                return false;
+            }
+            this.setState({
+                code_button_text: `${sec} S`,
+            })
+        }, 1000)
+    } 
+
     toggleForm = () =>{
         // 调父级的方法
         this.props.switchForm("register");
     }
 
     render(){
-        const { username, code_button_loading, code_button_text } = this.state;
+        const { username, code_button_loading, code_button_text, code_button_disable } = this.state;
         return (
             <Fragment>
                 <div className="form-head">
@@ -124,7 +164,8 @@ class LoginForm extends Component {
                                     <Input prefix={<UnlockOutlined className="site-form-item-icon" />} placeholder="Code" />
                                 </Col>                                    
                                 <Col span={8}>
-                                    <Button onClick = {this.getCode} type="danger" loading = {code_button_loading} >{code_button_text}</Button>
+                                    {/* s-4 */}
+                                    <Button onClick = {this.getCode} disabled = {code_button_disable} type="danger" loading = {code_button_loading} >{code_button_text}</Button>
                                 </Col>
                             </Row>
                         </Form.Item>
