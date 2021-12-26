@@ -5,7 +5,6 @@ import { Form, Input, Button, Col, Row, message } from 'antd';
 import { UserOutlined, UnlockOutlined } from '@ant-design/icons';
 // API
 import { Login, GetCode } from "../../api/account";
-import axios from "axios";
 
 
 class LoginForm extends Component {
@@ -14,9 +13,10 @@ class LoginForm extends Component {
         this.state={
             username: "",
             code_button_loading: false,
-            // S-3 增加按钮 disable 状态
             code_button_disable : false,
             code_button_text: "获取验证码",
+            // S-2: 定义一个开关，通常用于 处理 连续触发事件；
+            flag: true,
         };
     }
     onFinish = (values) => {
@@ -28,27 +28,32 @@ class LoginForm extends Component {
         console.log('Received values of form: ', values);        
     };
     getCode = () => {
+      //   S-3: 增加判断: 如果 flag 是false，就阻止; 如果是true，就继续进行；
+      if (!this.state.flag) {return false;}
       if(!this.state.username){
           message.warning('用户名不能为空!!',1);
           return false;
-      }      
-      this.setState({
-          code_button_loading: true,
-          code_button_text: "发送中",
-      })
+      }         
       const requestData = {
           username: "this.state.username",
           module: "login",
-      }  
+      }
+    
+    //   S-4: 让下一次不可以继续点击；
+    this.setState({
+        code_button_loading: true,
+        code_button_text: "发送中",
+        flag: false,
+    })
       GetCode(requestData).then(response => {
-        //   s-1: 如果成功,执行倒计时，每1秒钟，改变button 的文字；
-        //   console.log(response);
           this.countDown();
       }).catch(error => {
           this.setState({
-            code_button_loading:false,
+            // code_button_loading:false,
             code_buton_text: "重新获取",
           })
+        //   S-5: 如果出错的话，可以继续点击
+          this.setState({ flag: true })
       })
     }
 
@@ -59,34 +64,20 @@ class LoginForm extends Component {
         })
     }
 
-    // s-2 倒计时
-    // countDown = () => {
-    //     // s-5
-    //     let sec = 60;
-    //     this.setState({            
-    //         code_button_loading:false,
-    //         code_button_disable:true,
-    //         code_button_text: `${sec} S`,  // 注意是 ``, 不是 '';          
-    //       })
-    // } 
     countDown = () => {
-        // s-6 申明一个定时器
         let timer = null;
-        // 倒计时时间
         let sec = 5;
-        // 修改状态
         this.setState({            
-            code_button_loading:false,
-            code_button_disable:true,
             code_button_text: `${sec} S`,  // 注意是 ``, 不是 '';          
           })
-        //   S-7 开一个定时器
         timer = setInterval(() => {
             sec --;
             if (sec <= 0){
                 this.setState({
                     code_button_text: "重新获取",
-                    code_button_disable: false,
+                    // S-6： 当倒计时计数，让开关 true;
+                    // code_button_disable: false,
+                    flag: true,
                 })
                 clearInterval(timer);
                 return false;
@@ -164,8 +155,10 @@ class LoginForm extends Component {
                                     <Input prefix={<UnlockOutlined className="site-form-item-icon" />} placeholder="Code" />
                                 </Col>                                    
                                 <Col span={8}>
-                                    {/* s-4 */}
-                                    <Button onClick = {this.getCode} disabled = {code_button_disable} type="danger" loading = {code_button_loading} >{code_button_text}</Button>
+                                    {/* S-1 使用div 模拟没有 disable 属性时，我们增加 开关 属性 */}
+                                    {/* 注意在react中写style 的方式 {{}}； */}
+                                    <div style={{color:'#fff'}} onClick = {this.getCode}>{code_button_text}</div>
+                                    {/* <Button onClick = {this.getCode} disabled = {code_button_disable} type="danger" loading = {code_button_loading} >{code_button_text}</Button> */}
                                 </Col>
                             </Row>
                         </Form.Item>
